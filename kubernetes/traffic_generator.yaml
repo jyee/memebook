@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: traffic-generator
-          image: jyee/traffic_generator:0.1.0
+          image: jyee/traffic_generator:0.1.1
           imagePullPolicy: Always
           env:
             - name: PYTHONUNBUFFERED
