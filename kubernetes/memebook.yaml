@@ -1,0 +1,51 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: memebook
+  labels:
+    app: memebook
+    tier: frontend
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 80
+      protocol: TCP
+      targetPort: 5000
+  selector:
+    app: memebook
+    tier: frontend
+---
+apiVersion: apps/v1 #  for k8s versions before 1.9.0 use apps/v1beta2  and before 1.8.0 use extensions/v1beta1
+kind: Deployment
+metadata:
+  name: memebook
+spec:
+  selector:
+    matchLabels:
+      app: memebook
+      tier: frontend
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: memebook
+        tier: frontend
+    spec:
+      containers:
+        - name: memebook
+          image: jyee/memebook:0.1.0
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5000
+              protocol: TCP
+          env:
+            - name: DOGSTATSD_HOST_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: DD_AGENT_HOST
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: DD_TAGS
+              value: "service:memebook app:memebook env:production"
