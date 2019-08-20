@@ -1,0 +1,6 @@
+.DS_Store
+*.swp
+
+# Using pyenv and virtualenv to test locally.
+.python-version
+venv

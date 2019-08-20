@@ -1,0 +1,5 @@
+datadog
+ddtrace
+flask
+redis
+requests
