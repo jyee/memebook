@@ -1,0 +1,31 @@
+apiVersion: apps/v1 #  for k8s versions before 1.9.0 use apps/v1beta2  and before 1.8.0 use extensions/v1beta1
+kind: Deployment
+metadata:
+  name: traffic-generator
+spec:
+  selector:
+    matchLabels:
+      app: traffic-generator
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: traffic-generator
+    spec:
+      containers:
+        - name: traffic-generator
+          image: jyee/traffic_generator:0.1.0
+          imagePullPolicy: Always
+          env:
+            - name: PYTHONUNBUFFERED
+              value: "0"
+            - name: DOGSTATSD_HOST_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: DD_AGENT_HOST
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: TARGET_URL
+              value: "http://memebook"
