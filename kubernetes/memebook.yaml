@@ -47,5 +47,9 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: status.hostIP
-            - name: DD_TAGS
-              value: "service:memebook app:memebook env:production"
+            - name: DATADOG_SERVICE_NAME
+              value: "memebook"
+            - name: DD_ANALYTICS_ENABLED
+              value: "true"
+            - name: DD_LOGS_INJECTION
+              value: "true"
