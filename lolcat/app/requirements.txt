@@ -1,0 +1,15 @@
+certifi==2019.6.16
+chardet==3.0.4
+Click==7.0
+datadog==0.29.3
+ddtrace==0.28.0
+decorator==4.4.0
+Flask==1.1.1
+idna==2.8
+itsdangerous==1.1.0
+Jinja2==2.10.1
+MarkupSafe==1.1.1
+psutil==5.6.3
+requests==2.22.0
+urllib3==1.25.3
+Werkzeug==0.15.5
