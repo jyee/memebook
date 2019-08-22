@@ -8,4 +8,4 @@ COPY app/templates/main.html ./templates/main.html
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-CMD [ "ddtrace-run", "python", "./memebook.py" ]
+CMD [ "python", "./memebook.py" ]
