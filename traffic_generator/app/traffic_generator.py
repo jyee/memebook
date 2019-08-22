@@ -52,11 +52,14 @@ loop = asyncio.get_event_loop()
 while True:
     tasks = []
     for i in range(traffic_concurrency):
+        # We generally want 2x more views/gets than writes/posts
         if random.random() > .33:
             t = get_url(target_url + "?" + target_url_params)
         else:
             data = {'entry': generate_message()}
             t = post_url(target_url + "?" + target_url_params, data)
+            # TODO: to prevent the DB from getting huge, clear after every X posts
+
         task = asyncio.ensure_future(t)
         tasks.append(task)
     loop.run_until_complete(asyncio.wait(tasks))
