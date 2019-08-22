@@ -1,18 +1,69 @@
 import os
 import redis
+import asyncio
+from aiohttp import web, ClientSession
+import aiohttp_jinja2
+import jinja2
 
 from datadog import statsd
+from ddtrace import tracer, patch
+from ddtrace.contrib.aiohttp import trace_app
 
-from flask import Flask
-from flask import request, redirect, render_template, url_for
-
-import asyncio
-from aiohttp import ClientSession
 
 redishost = os.environ.get("REDIS_HOST") or "redis-master"
 redisport = os.environ.get("REDIS_PORT") or 6379
 
-app = Flask(__name__)
+
+# Async function to lolcat the text
+async def makelolz(text):
+    async with ClientSession() as session:
+        async with session.post("http://lolcat/makelolz", data={"text": text}) as resp:
+            return await resp.text()
+
+# Async function to get a doggo
+async def getdoggo():
+    async with ClientSession() as session:
+        async with session.get("http://ip.jsontest.com") as resp:
+            return await resp.text()
+
+def get_list(request):
+    if "shadow" in request.rel_url.query:
+        return request.rel_url.query["shadow"]
+    else:
+        return "entries"
+
+@aiohttp_jinja2.template('main.html')
+async def main_page(request):
+    redis_list = get_list(request)
+    if request.method == "POST":
+        statsd.increment("guestbook.post")
+        form = await request.post()
+
+        #responses = await asyncio.gather(
+        #    makelolz(form["entry"]),
+        #    #getdoggo(session)
+        #)
+        #print(responses)
+
+        app.redis.lpush(redis_list, form["entry"])
+        raise web.HTTPFound("/")
+    else:
+        statsd.increment("guestbook.view")
+        entries = app.redis.lrange(redis_list, 0, -1)
+        return {"entries": entries}
+
+async def clear_entries(request):
+    redis_list = get_list(request)
+    statsd.increment("guestbook.clear")
+    app.redis.ltrim(redis_list, 1, 0)
+    raise web.HTTPFound("/")
+
+
+patch(aiohttp=True)
+app = web.Application()
+aiohttp_jinja2.setup(app,
+    loader=jinja2.FileSystemLoader('templates'))
+
 app.redis = redis.StrictRedis(
     host=redishost,
     port=redisport,
@@ -21,53 +72,9 @@ app.redis = redis.StrictRedis(
     decode_responses=True)
 app.redis.config_set("save", "1 1")
 
-
-# Async function to lolcat the text
-async def makelolz(session, text):
-    async with session.post("http://lolcat/makelolz", data={"text": text}) as resp:
-        return await resp.text()
-
-# Async function to get a doggo
-async def getdoggo(session):
-    async with session.get("http://google.com") as resp:
-        return await resp.text()
-
-# Async function to memify the post
-async def memeify(text):
-    with aiohttp.ClientSession() as session:
-        tasks = [
-            makelolz(session, text),
-            getdoggo(session)
-        ]
-        responses = await asyncio.gather(*tasks)
-    print(responses)
-
-
-@app.route("/", methods=["GET", "POST"])
-def main_page():
-    redis_list = request.args.get("shadow") or "entries"
-    if request.method == "POST":
-        statsd.increment("guestbook.post")
-        text = request.form["entry"]
-
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(memeify(text))
-
-        app.redis.lpush(redis_list, request.form["entry"])
-        return redirect(url_for("main_page"))
-    else:
-        statsd.increment("guestbook.view")
-        entries = app.redis.lrange(redis_list, 0, -1)
-        return render_template("main.html", entries=entries)
-
-
-@app.route("/clear", methods=["POST"])
-def clear_entries():
-    redis_list = request.args.get("shadow") or "entries"
-    statsd.increment("guestbook.clear")
-    app.redis.ltrim(redis_list, 1, 0)
-    return redirect(url_for("main_page"))
-
-
-if __name__ == "__main__":
-  app.run(host="0.0.0.0", port=5000)
+app.add_routes([
+    web.route("*", "/", main_page),
+    web.post("/clear", clear_entries)
+])
+trace_app(app, tracer, service="memebook")
+web.run_app(app)
