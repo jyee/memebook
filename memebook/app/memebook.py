@@ -1,13 +1,19 @@
+from datadog import statsd
+from ddtrace import tracer, patch
+patch(aiohttp=True)
+patch(asyncio=True)
+patch(redis=True)
+
+from ddtrace.contrib.asyncio import context_provider
+from ddtrace.contrib.aiohttp import trace_app
+tracer.configure(context_provider=context_provider)
+
 import os
 import redis
 import asyncio
 from aiohttp import web, ClientSession
 import aiohttp_jinja2
 import jinja2
-
-from datadog import statsd
-from ddtrace import tracer, patch
-from ddtrace.contrib.aiohttp import trace_app
 
 service_name = os.environ.get("DATADOG_SERVICE_NAME") or "memebook"
 analytics = os.environ.get("DD_ANALYTICS_ENABLED") or True
@@ -17,9 +23,16 @@ redisport = os.environ.get("REDIS_PORT") or 6379
 
 # Async function to lolcat the text
 async def makelolz(text):
-    async with ClientSession() as session:
-        async with session.post("http://lolcat/makelolz", data={"text": text}) as resp:
-            return await resp.text()
+    with tracer.trace('asyncio.makelolz'):
+        async with ClientSession() as session:
+            data = {"text": text}
+            headers = {
+                'x-datadog-trace-id': str(tracer.current_span().trace_id),
+                'x-datadog-parent-id': str(tracer.current_span().span_id),
+            }
+            async with session.post("http://lolcat/makelolz", data=data, headers=headers) as resp:
+            #async with session.post("http://lolcat/makelolz", data=data) as resp:
+                return "text", await resp.text()
 
 # Async function to get a doggo
 async def getdoggo():
@@ -40,14 +53,15 @@ async def main_page(request):
         statsd.increment("guestbook.post")
         form = await request.post()
 
-        #responses = await asyncio.gather(
-        #    makelolz(form["entry"]),
-        #    #getdoggo(session)
-        #)
-        #print(responses)
+        tasks = [
+            makelolz(form["entry"])
+            #getdoggo(session)
+        ]
+        responses = await asyncio.gather(*tasks)
+        resp = dict(responses)
 
-        app.redis.lpush(redis_list, form["entry"])
-        raise web.HTTPFound("/")
+        app.redis.lpush(redis_list, resp["text"])
+        return web.HTTPFound("/")
     else:
         statsd.increment("guestbook.view")
         entries = app.redis.lrange(redis_list, 0, -1)
@@ -57,15 +71,13 @@ async def clear_entries(request):
     redis_list = get_list(request)
     statsd.increment("guestbook.clear")
     app.redis.ltrim(redis_list, 1, 0)
-    raise web.HTTPFound("/")
+    return web.HTTPFound("/")
 
 
-patch(aiohttp=True)
 app = web.Application()
 aiohttp_jinja2.setup(app,
     loader=jinja2.FileSystemLoader("templates"))
 
-patch(redis=True)
 app.redis = redis.StrictRedis(
     host=redishost,
     port=redisport,
@@ -78,5 +90,7 @@ app.add_routes([
     web.route("*", "/", main_page),
     web.post("/clear", clear_entries)
 ])
-trace_app(app, tracer, service=service_name, analytics_enabled=analytics)
+
+trace_app(app, tracer, service=service_name)
+app['datadog_trace']['analytics_enabled'] = analytics
 web.run_app(app)
