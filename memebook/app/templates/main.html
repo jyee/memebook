@@ -3,20 +3,25 @@
   <head>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
     <style>
+      .list-group {
+        column-count: 3;
+        column-gap: 0;
+      }
       .entry {
+        display: inline-block;
         padding: 0;
         overflow: hidden;
       }
       .entry img {
-        width: 500px;
+        width: 100%;
         height: auto;
+        max-width: 100%;
       }
       .entry span {
         position: absolute;
         bottom: 10px;
         left: 10px;
-        width: 480px;
-        font: 24px "Comic Sans MS", Impact, sans-serif; /* OH YES I DID! */
+        font: 22px "Comic Sans MS", Impact, sans-serif; /* OH YES I DID! */
         color: #fff;
         text-shadow:
           -2px -2px 0 #000,
