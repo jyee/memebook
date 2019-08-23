@@ -31,14 +31,13 @@ async def makelolz(text):
                 'x-datadog-parent-id': str(tracer.current_span().span_id),
             }
             async with session.post("http://lolcat/makelolz", data=data, headers=headers) as resp:
-            #async with session.post("http://lolcat/makelolz", data=data) as resp:
                 return "text", await resp.text()
 
 # Async function to get a doggo
 async def getdoggo():
     async with ClientSession() as session:
-        async with session.get("http://ip.jsontest.com") as resp:
-            return await resp.text()
+        async with session.get("http://doggo/getdoggo") as resp:
+            return "image", await resp.text()
 
 def get_list(request):
     if "shadow" in request.rel_url.query:
@@ -55,12 +54,13 @@ async def main_page(request):
 
         tasks = [
             makelolz(form["entry"])
-            #getdoggo(session)
+            getdoggo()
         ]
         responses = await asyncio.gather(*tasks)
         resp = dict(responses)
+        entry = "<div class=\"entry\"><img src=\"{}\" /><span>{}</span></div>".format(resp["image"], resp["text"])
 
-        app.redis.lpush(redis_list, resp["text"])
+        app.redis.lpush(redis_list, entry)
         return web.HTTPFound("/")
     else:
         statsd.increment("guestbook.view")
