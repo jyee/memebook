@@ -9,7 +9,8 @@ from datadog import statsd
 from ddtrace import tracer, patch
 from ddtrace.contrib.aiohttp import trace_app
 
-
+service_name = os.environ.get("DATADOG_SERVICE_NAME") or "memebook"
+analytics = os.environ.get("DD_ANALYTICS_ENABLED") or True
 redishost = os.environ.get("REDIS_HOST") or "redis-master"
 redisport = os.environ.get("REDIS_PORT") or 6379
 
@@ -32,7 +33,7 @@ def get_list(request):
     else:
         return "entries"
 
-@aiohttp_jinja2.template('main.html')
+@aiohttp_jinja2.template("main.html")
 async def main_page(request):
     redis_list = get_list(request)
     if request.method == "POST":
@@ -62,8 +63,9 @@ async def clear_entries(request):
 patch(aiohttp=True)
 app = web.Application()
 aiohttp_jinja2.setup(app,
-    loader=jinja2.FileSystemLoader('templates'))
+    loader=jinja2.FileSystemLoader("templates"))
 
+patch(redis=True)
 app.redis = redis.StrictRedis(
     host=redishost,
     port=redisport,
@@ -76,5 +78,5 @@ app.add_routes([
     web.route("*", "/", main_page),
     web.post("/clear", clear_entries)
 ])
-trace_app(app, tracer, service="memebook")
+trace_app(app, tracer, service=service_name, analytics_enabled=analytics)
 web.run_app(app)

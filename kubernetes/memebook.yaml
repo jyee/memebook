@@ -10,7 +10,7 @@ spec:
   ports:
     - port: 80
       protocol: TCP
-      targetPort: 5000
+      targetPort: 8080
   selector:
     app: memebook
     tier: frontend
@@ -36,7 +36,7 @@ spec:
           image: jyee/memebook:0.2.0
           imagePullPolicy: Always
           ports:
-            - containerPort: 5000
+            - containerPort: 8080
               protocol: TCP
           env:
             - name: DOGSTATSD_HOST_IP
@@ -47,9 +47,5 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: status.hostIP
-            - name: DATADOG_SERVICE_NAME
-              value: "memebook"
-            - name: DD_ANALYTICS_ENABLED
-              value: "true"
-            - name: DD_LOGS_INJECTION
-              value: "true"
+            - name: PYTHONUNBUFFERED
+              value: "0"
