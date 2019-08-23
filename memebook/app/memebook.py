@@ -35,9 +35,15 @@ async def makelolz(text):
 
 # Async function to get a doggo
 async def getdoggo():
-    async with ClientSession() as session:
-        async with session.get("http://doggo/getdoggo") as resp:
-            return "image", await resp.text()
+    with tracer.trace('asyncio.getdoggo'):
+        async with ClientSession() as session:
+            data = {"text": text}
+            headers = {
+                'x-datadog-trace-id': str(tracer.current_span().trace_id),
+                'x-datadog-parent-id': str(tracer.current_span().span_id),
+            }
+            async with session.get("http://doggo/getdoggo") as resp:
+                return "image", await resp.text()
 
 def get_list(request):
     if "shadow" in request.rel_url.query:
