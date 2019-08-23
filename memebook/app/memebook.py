@@ -37,7 +37,6 @@ async def makelolz(text):
 async def getdoggo():
     with tracer.trace('asyncio.getdoggo'):
         async with ClientSession() as session:
-            data = {"text": text}
             headers = {
                 'x-datadog-trace-id': str(tracer.current_span().trace_id),
                 'x-datadog-parent-id': str(tracer.current_span().span_id),
