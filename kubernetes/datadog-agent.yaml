@@ -28,6 +28,8 @@ spec:
               secretKeyRef:
                 name: datadog-api
                 key: token
+          - name: DD_TAGS
+            value: "env:memebook"
           - name: KUBERNETES
             value: "true"
           - name: DD_PROCESS_AGENT_ENABLED
