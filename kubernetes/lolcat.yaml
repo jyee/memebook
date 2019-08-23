@@ -32,7 +32,7 @@ spec:
     spec:
       containers:
         - name: lolcat
-          image: jyee/lolcat:0.2.0
+          image: jyee/lolcat:0.2.3
           imagePullPolicy: Always
           ports:
             - containerPort: 5000
@@ -47,7 +47,7 @@ spec:
                 fieldRef:
                   fieldPath: status.hostIP
             - name: DATADOG_SERVICE_NAME
-              value: "memebook"
+              value: "lolcat"
             - name: DD_ANALYTICS_ENABLED
               value: "true"
             - name: DD_LOGS_INJECTION
