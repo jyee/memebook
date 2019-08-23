@@ -8,9 +8,9 @@ from aiohttp import ClientSession
 
 # Rate is the max possible sleep between request bursts (lower is faster).
 # Concurrency is the number of requests per burst.
-traffic_rate = os.environ.get("TRAFFIC_RATE") or 1
+traffic_rate = os.environ.get("TRAFFIC_RATE") or 5
 traffic_concurrency = os.environ.get("TRAFFIC_CONCURRENCY") or 5
-max_req_sleep = traffic_rate / traffic_concurrency
+max_req_sleep = int(traffic_rate) / int(traffic_concurrency)
 
 # The url to hit
 target_url = os.environ.get("TARGET_URL") or "http://localhost:5000"
