@@ -49,16 +49,21 @@ def generate_message(length=30):
 # Main application
 loop = asyncio.get_event_loop()
 
+counter = 0
 while True:
     tasks = []
     for i in range(traffic_concurrency):
         # We generally want 2x more views/gets than writes/posts
         if random.random() > .33:
             t = get_url(target_url + "?" + target_url_params)
+        elif counter > 25:
+            counter = 0
+            data = {"clear": "clear"}
+            t = post_url(target_url + "/clear?" + target_url_params, data)
         else:
             data = {'entry': generate_message()}
             t = post_url(target_url + "?" + target_url_params, data)
-            # TODO: to prevent the DB from getting huge, clear after every X posts
+            counter += 1
 
         task = asyncio.ensure_future(t)
         tasks.append(task)
