@@ -53,12 +53,12 @@ async def main_page(request):
         form = await request.post()
 
         tasks = [
-            makelolz(form["entry"])
+            makelolz(form["entry"]),
             getdoggo()
         ]
         responses = await asyncio.gather(*tasks)
         resp = dict(responses)
-        entry = "<div class=\"entry\"><img src=\"{}\" /><span>{}</span></div>".format(resp["image"], resp["text"])
+        entry = "<img src=\"{}\" /><span>{}</span>".format(resp["image"], resp["text"])
 
         app.redis.lpush(redis_list, entry)
         return web.HTTPFound("/")
