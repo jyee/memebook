@@ -6,7 +6,6 @@ attrs==19.1.0
 certifi==2019.6.16
 chardet==3.0.4
 datadog==0.29.3
-ddtrace==0.28.0
 decorator==4.4.0
 idna==2.8
 Jinja2==2.10.1

@@ -4,9 +4,8 @@ patch(aiohttp=True)
 patch(asyncio=True)
 patch(redis=True)
 
-from ddtrace.contrib.asyncio import context_provider
+from ddtrace.contrib.asyncio import helpers
 from ddtrace.contrib.aiohttp import trace_app
-tracer.configure(context_provider=context_provider)
 
 import os
 import redis
@@ -22,28 +21,29 @@ redisport = os.environ.get("REDIS_PORT") or 6379
 
 
 # Async function to lolcat the text
+@tracer.wrap()
 async def makelolz(text):
-    with tracer.trace('asyncio.makelolz'):
-        async with ClientSession() as session:
-            data = {"text": text}
-            headers = {
-                'x-datadog-trace-id': str(tracer.current_span().trace_id),
-                'x-datadog-parent-id': str(tracer.current_span().span_id),
-            }
-            async with session.post("http://lolcat/makelolz", data=data, headers=headers) as resp:
-                return "text", await resp.text()
+    async with ClientSession() as session:
+        data = {"text": text}
+        headers = {
+            'x-datadog-trace-id': str(tracer.current_span().trace_id),
+            'x-datadog-parent-id': str(tracer.current_span().span_id),
+        }
+        async with session.post("http://lolcat/makelolz", data=data, headers=headers) as resp:
+            return await resp.text()
 
 # Async function to get a doggo
+@tracer.wrap()
 async def getdoggo():
-    with tracer.trace('asyncio.getdoggo'):
-        async with ClientSession() as session:
-            headers = {
-                'x-datadog-trace-id': str(tracer.current_span().trace_id),
-                'x-datadog-parent-id': str(tracer.current_span().span_id),
-            }
-            async with session.get("http://doggo/getdoggo") as resp:
-                return "image", await resp.text()
+    async with ClientSession() as session:
+        headers = {
+            'x-datadog-trace-id': str(tracer.current_span().trace_id),
+            'x-datadog-parent-id': str(tracer.current_span().span_id),
+        }
+        async with session.get("http://doggo/getdoggo", headers=headers) as resp:
+            return await resp.text()
 
+@tracer.wrap()
 def get_list(request):
     if "shadow" in request.rel_url.query:
         return request.rel_url.query["shadow"]
@@ -57,13 +57,12 @@ async def main_page(request):
         statsd.increment("guestbook.post")
         form = await request.post()
 
-        tasks = [
-            makelolz(form["entry"]),
-            getdoggo()
-        ]
-        responses = await asyncio.gather(*tasks)
-        resp = dict(responses)
-        entry = "<img src=\"{}\" /><span>{}</span>".format(resp["image"], resp["text"])
+        task_img = helpers.create_task(getdoggo())
+        task_text = helpers.create_task(makelolz(form["entry"]))
+        img = await task_img
+        text = await task_text
+
+        entry = "<img src=\"{}\" /><span>{}</span>".format(img, text)
 
         app.redis.lpush(redis_list, entry)
         return web.HTTPFound("/")
