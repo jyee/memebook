@@ -53,6 +53,8 @@ spec:
             value: "true"
           - name: DD_DOGSTATSD_NON_LOCAL_TRAFFIC
             value: "true"
+          - name: DD_APM_NON_LOCAL_TRAFFIC
+            value: "true"
           # If your Kubernetes is running the Containerd CRI, uncomment the lines below.
           #- name: DD_CRI_SOCKET_PATH
           #  value: "/var/run/containerd/containerd.sock"
