@@ -10,6 +10,7 @@ spec:
       name: datadog-agent
     spec:
       serviceAccount: datadog-agent
+      hostNetwork: true
       containers:
       - image: datadog/agent:latest
         name: datadog-agent
