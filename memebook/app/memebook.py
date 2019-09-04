@@ -1,5 +1,11 @@
-from datadog import statsd
+import os
+from datadog import initialize, statsd
 from ddtrace import tracer, patch
+
+if "DD_SOCKET_PATH" in os.environ:
+    initialize(socket_path = os.environ.get("DD_SOCKET_PATH"))
+    tracer.configure(uds_path = os.environ.get("DD_SOCKET_PATH"))
+
 patch(aiohttp=True)
 patch(asyncio=True)
 patch(redis=True)
@@ -26,8 +32,8 @@ async def makelolz(text):
     async with ClientSession() as session:
         data = {"text": text}
         headers = {
-            'x-datadog-trace-id': str(tracer.current_span().trace_id),
-            'x-datadog-parent-id': str(tracer.current_span().span_id),
+            "x-datadog-trace-id": str(tracer.current_span().trace_id),
+            "x-datadog-parent-id": str(tracer.current_span().span_id),
         }
         async with session.post("http://lolcat/makelolz", data=data, headers=headers) as resp:
             return await resp.text()
@@ -37,8 +43,8 @@ async def makelolz(text):
 async def getdoggo():
     async with ClientSession() as session:
         headers = {
-            'x-datadog-trace-id': str(tracer.current_span().trace_id),
-            'x-datadog-parent-id': str(tracer.current_span().span_id),
+            "x-datadog-trace-id": str(tracer.current_span().trace_id),
+            "x-datadog-parent-id": str(tracer.current_span().span_id),
         }
         async with session.get("http://doggo/getdoggo", headers=headers) as resp:
             return await resp.text()
@@ -96,5 +102,5 @@ app.add_routes([
 ])
 
 trace_app(app, tracer, service=service_name)
-app['datadog_trace']['analytics_enabled'] = analytics
+app["datadog_trace"]["analytics_enabled"] = analytics
 web.run_app(app)

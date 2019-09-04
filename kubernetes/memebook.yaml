@@ -39,14 +39,8 @@ spec:
             - containerPort: 8080
               protocol: TCP
           env:
-            - name: DOGSTATSD_HOST_IP
-              valueFrom:
-                fieldRef:
-                  fieldPath: status.hostIP
-            - name: DD_AGENT_HOST
-              valueFrom:
-                fieldRef:
-                  fieldPath: status.hostIP
+            - name: DD_SOCKET_PATH
+              value: "/var/run/datadog"
             - name: PYTHONUNBUFFERED
               value: "0"
             - name: DATADOG_SERVICE_NAME
@@ -55,3 +49,10 @@ spec:
               value: "true"
             - name: DD_LOGS_INJECTION
               value: "true"
+          volumeMounts:
+            - name: dsdsocket
+              mountPath: /var/run/datadog
+          volumes:
+            - hostPath:
+                path: /var/run/datadog/
+              name: dsdsocket

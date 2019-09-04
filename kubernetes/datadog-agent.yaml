@@ -15,11 +15,9 @@ spec:
         name: datadog-agent
         ports:
           - containerPort: 8125
-            hostPort: 8125
             name: dogstatsdport
             protocol: UDP
           - containerPort: 8126
-            hostPort: 8126
             name: traceport
             protocol: TCP
         env:
@@ -51,10 +49,6 @@ spec:
             value: "true"
           - name: DD_LEADER_ELECTION
             value: "true"
-          - name: DD_DOGSTATSD_NON_LOCAL_TRAFFIC
-            value: "true"
-          - name: DD_APM_NON_LOCAL_TRAFFIC
-            value: "true"
           # If your Kubernetes is running the Containerd CRI, uncomment the lines below.
           #- name: DD_CRI_SOCKET_PATH
           #  value: "/var/run/containerd/containerd.sock"
@@ -83,6 +77,8 @@ spec:
             readOnly: true
           - name: pointerdir
             mountPath: /opt/datadog-agent/run
+          - name: dsdsocket
+            mountPath: /var/run/datadog
         livenessProbe:
           exec:
             command:
@@ -110,6 +106,9 @@ spec:
         - hostPath:
             path: /opt/datadog-agent/run
           name: pointerdir
+        - hostPath:
+            path: /var/run/datadog/
+          name: dsdsocket
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
