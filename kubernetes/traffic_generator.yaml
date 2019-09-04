@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: traffic-generator
-          image: jyee/traffic_generator:0.3.7
+          image: jyee/traffic_generator:0.3.8-sockets
           imagePullPolicy: Always
           env:
             - name: PYTHONUNBUFFERED

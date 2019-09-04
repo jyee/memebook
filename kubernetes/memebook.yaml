@@ -33,7 +33,7 @@ spec:
     spec:
       containers:
         - name: memebook
-          image: jyee/memebook:0.3.7
+          image: jyee/memebook:0.3.8-sockets
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
