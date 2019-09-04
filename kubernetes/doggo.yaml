@@ -49,7 +49,7 @@ spec:
           volumeMounts:
             - name: dsdsocket
               mountPath: /var/run/datadog
-        volumes:
-          - hostPath:
-              path: /var/run/datadog/
-            name: dsdsocket
+      volumes:
+        - hostPath:
+            path: /var/run/datadog/
+          name: dsdsocket
