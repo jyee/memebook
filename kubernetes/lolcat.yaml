@@ -32,7 +32,7 @@ spec:
     spec:
       containers:
         - name: lolcat
-          image: jyee/lolcat:0.3.8
+          image: jyee/lolcat:0.3.9
           imagePullPolicy: Always
           ports:
             - containerPort: 5000
