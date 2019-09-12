@@ -9,4 +9,4 @@ COPY app/templates/main.html ./templates/main.html
 RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install git+https://github.com/DataDog/dd-trace-py.git@master#egg=ddtrace
 
-CMD [ "python", "./memebook.py" ]
+CMD [ "ddtrace-run", "python", "./memebook.py" ]

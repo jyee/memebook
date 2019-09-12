@@ -22,24 +22,16 @@ redisport = os.environ.get("REDIS_PORT") or 6379
 
 # Async function to lolcat the text
 @tracer.wrap()
-async def makelolz(text):
+async def makelolz(text, headers):
     async with ClientSession() as session:
         data = {"text": text}
-        headers = {
-            'x-datadog-trace-id': str(tracer.current_span().trace_id),
-            'x-datadog-parent-id': str(tracer.current_span().span_id),
-        }
         async with session.post("http://lolcat/makelolz", data=data, headers=headers) as resp:
             return await resp.text()
 
 # Async function to get a doggo
 @tracer.wrap()
-async def getdoggo():
+async def getdoggo(headers):
     async with ClientSession() as session:
-        headers = {
-            'x-datadog-trace-id': str(tracer.current_span().trace_id),
-            'x-datadog-parent-id': str(tracer.current_span().span_id),
-        }
         async with session.get("http://doggo/getdoggo", headers=headers) as resp:
             return await resp.text()
 
@@ -57,8 +49,12 @@ async def main_page(request):
         statsd.increment("guestbook.post")
         form = await request.post()
 
-        task_img = helpers.create_task(getdoggo())
-        task_text = helpers.create_task(makelolz(form["entry"]))
+        headers = {
+            'x-datadog-trace-id': str(tracer.current_span().trace_id),
+            'x-datadog-parent-id': str(tracer.current_span().span_id),
+        }
+        task_img = helpers.create_task(getdoggo(headers))
+        task_text = helpers.create_task(makelolz(form["entry"], headers))
         img = await task_img
         text = await task_text
 
